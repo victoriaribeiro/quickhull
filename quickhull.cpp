@@ -1,5 +1,6 @@
 #include<bits/stdc++.h>
 #include <GL/glut.h>
+#include <vector>
 using namespace std;
 
 // iPair is integer pairs
@@ -11,7 +12,10 @@ set<iPair> hull;
 GLfloat xf, yf, win, matrix[2][50];
 GLint view_w, view_h;
 int atual = -1;
+vector<iPair> a;
 
+
+// iPair pontos[];
 
 
 // Returns the side of point p with respect to line
@@ -47,7 +51,7 @@ int lineDist(iPair p1, iPair p2, iPair p)
 
 // End points of line L are p1 and p2.  side can have value
 // 1 or -1 specifying each of the parts made by the line L
-void quickHull(iPair a[], int n, iPair p1, iPair p2, int side)
+void quickHull(vector<iPair> a, int n, iPair p1, iPair p2, int side)
 {
     int ind = -1;
     int max_dist = 0;
@@ -78,15 +82,19 @@ void quickHull(iPair a[], int n, iPair p1, iPair p2, int side)
     quickHull(a, n, a[ind], p2, -findSide(a[ind], p2, p1));
 }
 
-void printHull(iPair a[], int n)
+void printHull(vector<iPair> a, int n)
 {
+    hull.clear();
+
     // a[i].second -> y-coordinate of the ith point
     if (n < 3)
     {
         cout << "Convex hull not possible\n";
         return;
     }
+    
 
+    cout << a[1].first;
     // Finding the point with minimum and
     // maximum x-coordinate
     int min_x = 0, max_x = 0;
@@ -108,13 +116,13 @@ void printHull(iPair a[], int n)
     // a[max_x]
     quickHull(a, n, a[min_x], a[max_x], -1);
 
+
     cout << "The points in Convex Hull are:\n";
-    while (!hull.empty())
-    {
-        cout << "(" <<( *hull.begin()).first << ", "
-             << (*hull.begin()).second << ") ";
-        hull.erase(hull.begin());
+    for( iPair pair : hull){
+        cout << "(" << pair.first << ", "
+             << pair.second << ")\n";
     }
+    cout << "\n\n";
 }
 
 
@@ -142,6 +150,15 @@ void Desenha(void)
                 glVertex2f(matrix[0][j], matrix[1][j]);
                 glEnd();
          }
+     }
+
+    glColor3f(0.0f, 1.0f, 0.0f);
+     for( iPair aux: hull){
+        cout << aux.first;
+        glBegin(GL_POINTS);
+
+        glVertex2f(aux.first, aux.second);
+        glEnd();
      }
 
 
@@ -190,8 +207,8 @@ void GerenciaTeclado(unsigned char key, int x, int y)
             case 'b':// muda a cor corrente para azul
                      glColor3f(0.0f, 0.0f, 1.0f);
                      break;
-            // case 'q':
-            //         quickhull();
+            case 'q':
+                     printHull(a,a.size());
     }
     glutPostRedisplay();
 }
@@ -204,10 +221,10 @@ void GerenciaMouse(int button, int state, int x, int y)
              iPair ponto;
              ponto.first = ( (2 * win * x) / view_w) - win;
              ponto.second = ( ( (2 * win) * (y-view_h) ) / -view_h) - win;
-             hull.insert(ponto);
-                //              atual++;
-                // matrix[0][atual] =
-                // matrix[1][atual] = ( ( (2 * win) * (y-view_h) ) / -view_h) - win;
+             a.push_back(ponto);
+                              atual++;
+                matrix[0][atual] = ponto.first;
+                matrix[1][atual] = ponto.second;
 
                   // Troca o tamanho do retângulo, que vai do centro da
                   // janela até a posiçãoglEnd(); onde o usuário clicou com o mouse
