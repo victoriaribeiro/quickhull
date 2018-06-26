@@ -1,26 +1,20 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 #include <GL/glut.h>
 #include <vector>
 using namespace std;
 
-// iPair is integer pairs
-#define iPair pair<float, float>
+#define Ponto pair<float, float>
 
-// Stores the result (points of convex hull)
-set<iPair> hull;
+// armazena os pontos do fecho convexo (points of convex hull)
+set<Ponto> hull;
 
-GLfloat xf, yf, win, matrix[2][50];
+GLfloat xf, yf, win;
 GLint view_w, view_h;
-int atual = -1;
-vector<iPair> a;
+vector<Ponto> a;
+vector<Ponto> teste;
 
-
-// iPair pontos[];
-
-
-// Returns the side of point p with respect to line
-// joining points p1 and p2.
-int findSide(iPair p1, iPair p2, iPair p)
+// retorna de que lado o ponto p está em relação a linha entre p1 e p2
+int findSide(Ponto p1, Ponto p2, Ponto p)
 {
     int val = (p.second - p1.second) * (p2.first - p1.first) -
               (p2.second - p1.second) * (p.first - p1.first);
@@ -32,149 +26,126 @@ int findSide(iPair p1, iPair p2, iPair p)
     return 0;
 }
 
-// Returns the square of distance between
-// p1 and p2.
-int dist(iPair p, iPair q)
+// retorna a distância entre o ponto p e a linha entre p1 e p2 
+int distanciaLinha(Ponto p1, Ponto p2, Ponto p)
 {
-    return (p.second - q.second) * (p.second - q.second) +
-           (p.first - q.first) * (p.first - q.first);
-}
-
-// returns a value proportional to the distance
-// between the point p and the line joining the
-// points p1 and p2
-int lineDist(iPair p1, iPair p2, iPair p)
-{
-    return abs ((p.second - p1.second) * (p2.first - p1.first) -
+    return abs((p.second - p1.second) * (p2.first - p1.first) -
                (p2.second - p1.second) * (p.first - p1.first));
 }
 
-// End points of line L are p1 and p2.  side can have value
-// 1 or -1 specifying each of the parts made by the line L
-void quickHull(vector<iPair> a, int n, iPair p1, iPair p2, int side)
+
+void quickHull(vector<Ponto> a, int n, Ponto p1, Ponto p2, int side)
 {
     int ind = -1;
-    int max_dist = 0;
+    int distanciaMax = 0;
 
-    // finding the point with maximum distance
-    // from L and also on the specified side of L.
-    for (int i=0; i<n; i++)
+    // Encontra o ponto mais distante da linha formada por p1 e p2
+    for (int i = 0; i < n; i++)
     {
-        int temp = lineDist(p1, p2, a[i]);
-        if (findSide(p1, p2, a[i]) == side && temp > max_dist)
+        int temp = distanciaLinha(p1, p2, a[i]);
+        if (findSide(p1, p2, a[i]) == side && temp > distanciaMax)
         {
             ind = i;
-            max_dist = temp;
+            distanciaMax = temp;
         }
     }
 
-    // If no point is found, add the end points
-    // of L to the convex hull.
+    // Se nenhum ponto é encontrado
+    // adiciona os pontos p1 e p2 ao fecho convexo.
     if (ind == -1)
     {
         hull.insert(p1);
         hull.insert(p2);
+        teste.push_back(p1);
+        teste.push_back(p2);
         return;
     }
 
-    // Recur for the two parts divided by a[ind]
+    // Chama a recursão para as duas partes dividindo em a[ind]
     quickHull(a, n, a[ind], p1, -findSide(a[ind], p1, p2));
     quickHull(a, n, a[ind], p2, -findSide(a[ind], p2, p1));
 }
 
-void printHull(vector<iPair> a, int n)
+void quickhull(vector<Ponto> a, int n)
 {
+    // limpa o eixo convexo
     hull.clear();
+    teste.clear();
 
-    // a[i].second -> y-coordinate of the ith point
     if (n < 3)
     {
-        cout << "Convex hull not possible\n";
+        cout << "Não é possível calcular o fecho convexo.";
         return;
     }
-    
 
-    cout << a[1].first;
-    // Finding the point with minimum and
-    // maximum x-coordinate
-    int min_x = 0, max_x = 0;
-    for (int i=1; i<n; i++)
+    // Encontra o ponto máximo e mínimo no eixo x
+    int minX = 0, maxX = 0;
+    for (int i = 1; i < n; i++)
     {
-        if (a[i].first < a[min_x].first)
-            min_x = i;
-        if (a[i].first > a[max_x].first)
-            max_x = i;
+        if (a[i].first < a[minX].first)
+            minX = i;
+        if (a[i].first > a[maxX].first)
+            maxX = i;
     }
 
-    // Recursively find convex hull points on
-    // one side of line joining a[min_x] and
-    // a[max_x]
-    quickHull(a, n, a[min_x], a[max_x], 1);
+    // Recursivamente encontra os pontos do fecho convexo
+    // de um lado da linha que liga a[maxX] e a[minX]
+    quickHull(a, n, a[minX], a[maxX], 1);
 
-    // Recursively find convex hull points on
-    // other side of line joining a[min_x] and
-    // a[max_x]
-    quickHull(a, n, a[min_x], a[max_x], -1);
-
-
-    cout << "The points in Convex Hull are:\n";
-    for( iPair pair : hull){
-        cout << "(" << pair.first << ", "
-             << pair.second << ")\n";
-    }
-    cout << "\n\n";
+    // Recursivamente encontra os pontos do fecho convexo
+    // do outro lado da linha que liga a[maxX] e a[minX]
+    quickHull(a, n, a[minX], a[maxX], -1);
 }
-
 
 // Função callback chamada para fazer o desenho
 void Desenha(void)
 {
     int i, j;
-     glMatrixMode(GL_MODELVIEW);
-     glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-     glClear(GL_COLOR_BUFFER_BIT);
-     // Desenha um retângulo preenchido com a cor corrente
-     glPointSize(10);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // Desenha um retângulo preenchido com a cor corrente
+    glPointSize(10);
 
-     glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(1.0f, 0.0f, 0.0f);
 
-     glEnable(GL_POINT_SMOOTH);
-     glEnable(GL_BLEND);
-     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_POINT_SMOOTH);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-     if(atual >= 0){
-         for(j=0;j<=atual;j++){
-                glBegin(GL_POINTS);
 
-                glVertex2f(matrix[0][j], matrix[1][j]);
-                glEnd();
-         }
-     }
+    // desenha os pontos na tela
+    for (Ponto p : a)
+    {
+        glBegin(GL_POINTS);
+        glVertex2f(p.first, p.second);
+        glEnd();
+    }
 
     glColor3f(0.0f, 1.0f, 0.0f);
-     for( iPair aux: hull){
-        cout << aux.first;
-        glBegin(GL_POINTS);
+    glLineWidth(2.5);
+    glBegin(GL_LINES);
 
+    // desenha as linhas do fecho convexo
+    for (Ponto aux : teste)
+    {
         glVertex2f(aux.first, aux.second);
-        glEnd();
-     }
+    }
+    glEnd();
 
-
-     glEnd();
-     glFlush();
+    glEnd();
+    glFlush();
 }
 
 // Inicializa parâmetros de rendering
-void Inicializa (void)
+void Inicializa(void)
 {
     // Define a cor de fundo da janela de visualização como preta
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    xf=50.0f;
-    yf=50.0f;
-    win=250.0f;
-
+    xf = 50.0f;
+    yf = 50.0f;
+    win = 250.0f;
 }
 
 // Função callback chamada quando o tamanho da janela é alterado
@@ -188,27 +159,22 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     // Inicializa o sistema de coordenadas
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D (-win, win, -win, win);
+    gluOrtho2D(-win, win, -win, win);
 }
 
 // Função callback chamada para gerenciar eventos de teclado
 void GerenciaTeclado(unsigned char key, int x, int y)
 {
-    switch (key) {
-            case 'R':
-            case 'r':// muda a cor corrente para vermelho
-                     glColor3f(1.0f, 0.0f, 0.0f);
-                     break;
-            case 'G':
-            case 'g':// muda a cor corrente para verde
-                     glColor3f(0.0f, 1.0f, 0.0f);
-                     break;
-            case 'B':
-            case 'b':// muda a cor corrente para azul
-                     glColor3f(0.0f, 0.0f, 1.0f);
-                     break;
-            case 'q':
-                     printHull(a,a.size());
+    switch (key)
+    {
+    case 'q': // executa o quickhull 
+        quickhull(a, a.size());
+        break;
+    case 'c': // limpa a tela e os vetores de apoio
+        hull.clear();
+        teste.clear();
+        a.clear();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     }
     glutPostRedisplay();
 }
@@ -217,21 +183,14 @@ void GerenciaTeclado(unsigned char key, int x, int y)
 void GerenciaMouse(int button, int state, int x, int y)
 {
     if (button == GLUT_LEFT_BUTTON)
-         if (state == GLUT_DOWN) {
-             iPair ponto;
-             ponto.first = ( (2 * win * x) / view_w) - win;
-             ponto.second = ( ( (2 * win) * (y-view_h) ) / -view_h) - win;
-             a.push_back(ponto);
-                              atual++;
-                matrix[0][atual] = ponto.first;
-                matrix[1][atual] = ponto.second;
+        if (state == GLUT_DOWN)
+        {
+            Ponto ponto;
+            ponto.first = ((2 * win * x) / view_w) - win;
+            ponto.second = (((2 * win) * (y - view_h)) / -view_h) - win;
+            a.push_back(ponto);
 
-                  // Troca o tamanho do retângulo, que vai do centro da
-                  // janela até a posiçãoglEnd(); onde o usuário clicou com o mouse
-                  //
-                //   xf = ( (2 * win * x) / view_w) - win;
-                //   yf = ( ( (2 * win) * (y-view_h) ) / -view_h) - win;
-         }
+        }
     glutPostRedisplay();
 }
 
@@ -239,17 +198,19 @@ void GerenciaMouse(int button, int state, int x, int y)
 // para teclas especiais, tais como F1, PgDn e Home
 void TeclasEspeciais(int key, int x, int y)
 {
-    if(key == GLUT_KEY_UP) {
-           win -= 20;
-           glMatrixMode(GL_PROJECTION);
-           glLoadIdentity();
-           gluOrtho2D (-win, win, -win, win);
+    if (key == GLUT_KEY_UP)
+    {
+        win -= 20;
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluOrtho2D(-win, win, -win, win);
     }
-    if(key == GLUT_KEY_DOWN) {
-           win += 20;
-           glMatrixMode(GL_PROJECTION);
-           glLoadIdentity();
-           gluOrtho2D (-win, win, -win, win);
+    if (key == GLUT_KEY_DOWN)
+    {
+        win += 20;
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluOrtho2D(-win, win, -win, win);
     }
     glutPostRedisplay();
 }
@@ -257,16 +218,16 @@ void TeclasEspeciais(int key, int x, int y)
 // Programa Principal
 int main(int argc, char *argv[])
 {
-     glutInit(&argc, argv);
-     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-     glutInitWindowSize(1200,1000);
-     glutInitWindowPosition(0,0);
-     glutCreateWindow("Exemplo de Interacao");
-     glutDisplayFunc(Desenha);
-     glutReshapeFunc(AlteraTamanhoJanela);
-     glutKeyboardFunc(GerenciaTeclado);
-     glutMouseFunc(GerenciaMouse);
-     glutSpecialFunc(TeclasEspeciais);
-     Inicializa();
-     glutMainLoop();
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(1200, 1000);
+    glutInitWindowPosition(0, 0);
+    glutCreateWindow("QuickHull");
+    glutDisplayFunc(Desenha);
+    glutReshapeFunc(AlteraTamanhoJanela);
+    glutKeyboardFunc(GerenciaTeclado);
+    glutMouseFunc(GerenciaMouse);
+    glutSpecialFunc(TeclasEspeciais);
+    Inicializa();
+    glutMainLoop();
 }
