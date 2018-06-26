@@ -1,3 +1,5 @@
+// g++ quickhull.cpp -lGL -lGLU -lglut -lm
+
 #include <bits/stdc++.h>
 #include <GL/glut.h>
 #include <vector>
